@@ -1,27 +1,40 @@
-// index.js
 const express = require("express");
 const cors = require("cors");
-const sequelize = require("./config/database"); // Certifique-se de que a configuração do banco de dados está correta
-const userRoutes = require("./routes/userRoutes"); // Importe as rotas do usuário
+const sequelize = require("./config/database");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
-app.use(express.json()); // Para ler JSON do corpo das requisições
-app.use(cors()); // Se você precisar de CORS, caso contrário, remova essa linha
+app.use(express.json());
+app.use(cors());
 
 // Usando as rotas de usuário
 app.use("/api", userRoutes);
 
-// Sincronizando com o banco de dados
-sequelize
-  .sync({ force: false })
-  .then(() => {
-    console.log("Banco de dados sincronizado");
-  })
-  .catch((err) => {
-    console.error("Erro ao sincronizar banco de dados:", err);
-  });
-
-// Iniciar o servidor
-app.listen(3000, () => {
-  console.log("Servidor rodando em http://localhost:3000");
+// Rota básica para verificar se a API está funcionando
+app.get("/", (req, res) => {
+  res.json({ message: "API funcionando!" });
 });
+
+// Sincronizando banco de dados
+// Em ambiente de produção, você deve gerenciar as migrações de forma diferente
+if (process.env.NODE_ENV !== "production") {
+  sequelize
+    .sync({ force: false })
+    .then(() => {
+      console.log("Banco de dados sincronizado");
+    })
+    .catch((err) => {
+      console.error("Erro ao sincronizar banco de dados:", err);
+    });
+}
+
+// Iniciar o servidor apenas em desenvolvimento local
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+  });
+}
+
+// Exportação necessária para a Vercel
+module.exports = app;
